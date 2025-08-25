@@ -5,26 +5,61 @@ import { assets,blog_data, comments_data} from '../assets/assets'
 import Moment from 'moment'
 import Footer from '../components/Footer'
 import Loader from '../components/Loader'
+import { useAppContext } from '../../context/AppContext'
+import toast from 'react-hot-toast'
 
 function Blog() {
 
     const {id}=useParams();
+
+    const {axios}=useAppContext()
+
     const[data,setData]=useState(null);
     const[comments,setCommets]=useState([]);
     const[name,setName]=useState('');
     const[content,setContent]=useState('');
 
     const fetchBlogData=async ()=>{
-        const data=blog_data.find(item=> item._id===id)
-        setData(data)
+        try{
+          const {data}=await axios.get(`/api/blog/${id}`)
+          data.success?setData(data.blog):toast.error(data.message)
+        }
+        catch(err){
+          toast.error(err.message)
+        }
     }
 
     const fetchComments=async ()=>{
-      setCommets(comments_data)
+       try{
+        const {data}=await axios.post(`/api/blog/comments`,{blogId:id})
+        if(data.success){
+          setCommets(data.comments)
+        }
+        else{
+          toast.error(data.message)
+        }
+       }
+       catch(err){
+        toast.error(err.message)
+       }
     }
 
-    const addComment=()=>{
-
+    const addComment=async (e)=>{
+      e.preventDefault()
+      try{
+        const {data}=await axios.post('/api/blog/add-comment',{blog:id,name,content});
+        if(data.success){
+          toast.success(data.message)
+          setName('')
+          setContent('')
+        }
+        else{
+          toast.error(data.message)
+        }
+      }
+      catch(err){
+        toast.error(err.message)
+      }
     }
 
     useEffect(()=>{

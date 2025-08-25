@@ -100,7 +100,7 @@ export const addComment=async (req,res)=>{
     try{
     const {blog,name,content}=req.body
     await Comment.create({blog,name,content})
-    res.json({success:true,message:'Comment added successfully'})
+    res.json({success:true,message:'Comment added for review'})
    }
    catch(err){
      res.json({success:false,message:err.message})

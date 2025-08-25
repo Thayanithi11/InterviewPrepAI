@@ -1,7 +1,17 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { assets } from '../assets/assets'
+import { useAppContext } from '../../context/AppContext'
 
 const Header = () => {
+
+  const {setInput,input}=useAppContext()
+  const inputRef=useRef()
+
+  const onSubmitHandler=async (e)=>{
+        e.preventDefault()
+        setInput(inputRef.current.value)     
+  }
+
   return (
     <div className='mx-8 sm:mx-16 xl:mx-24 relative'>
         <div className='text-center mt-20 mb-8'>
@@ -21,9 +31,9 @@ const Header = () => {
                 starts right here.
             </p>
 
-            <form className='flex justify-between max-w-lg max-sm:scale-75 mx-auto border
+            <form onChange={onSubmitHandler} onSubmit={(e)=>{e.preventDefault()}} className='flex justify-between max-w-lg max-sm:scale-75 mx-auto border
             border-gray-300 bg-white rounded overflow-hidden'>
-                <input type="text" className='w-full pl-4 outline-none' placeholder='Search for blogs' required />
+                <input ref={inputRef} type="text" className='w-full pl-4 outline-none' placeholder='Search for blogs' required />
                 <button type='submit' className='bg-primary text-white px-8 py-2 m-1.5
                 rounded hover:scale-105 transition-all cursor-pointer'>Search</button>
             </form>

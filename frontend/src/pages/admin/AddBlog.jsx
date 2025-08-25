@@ -2,12 +2,16 @@ import React, { useEffect, useState ,useRef} from 'react'
 import { assets, blogCategories } from '../../assets/assets'
 import Quill from 'quill';
 import { option } from 'motion/react-client';
+import { useAppContext } from '../../../context/AppContext';
+import toast from 'react-hot-toast';
 
 function AddBlog() {
 
+  const {axios}=useAppContext()
+  const[isAdding,setIsAdding]=useState(false)
+
   const editorRef=useRef(null);
   const quillRef=useRef(null);
-
 
   const [image,setImage]=useState(false);
   const [title,setTitle]=useState('');
@@ -20,7 +24,34 @@ function AddBlog() {
   }
 
   const onSubmitHandler=async (e)=>{
-    e.preventDefault();
+    try{
+      e.preventDefault();
+      setIsAdding(true)
+
+      const blog={
+        title,subTitle,description:quillRef.current.root.innerHTML,
+        category,isPublished
+      }
+      const formData=new FormData();
+      formData.append('blog',JSON.stringify(blog))
+      formData.append('image',image)
+      const {data}=await axios.post('/api/blog/add',formData)
+      if(data.success){
+        toast.success(data.message)
+        setImage(false)
+        setTitle('')
+        quillRef.current.root.innerHTML=''
+        setCategory('Startup')
+      }
+      else{
+        toast.error(data.message)
+      }
+    }
+    catch(err){
+      toast.error(err.message)
+    }finally{
+      setIsAdding(false)
+    }
   }
 
   useEffect(()=>{
@@ -52,7 +83,7 @@ function AddBlog() {
         <p className='mt-4'>Blog Description</p>
         <div className='max-w-lg h-74 pb-16 sm:pb-10 pt-2 relative'>
           <div ref={editorRef}></div>
-          <button type="button" onClick={generateContent} className='absolute bottom-1
+          <button type="button" onClick={generateContent} className='absolute bottom-8 md:bottom-1
           right-2  text-xs text-white bg-black/70 px-4 py-1.5 rounded
           hover:underline cursor-pointer'>Generate with AI
           </button>
@@ -74,8 +105,10 @@ function AddBlog() {
         onChange={e=>setIsPublished(e.target.checked)}/>
       </div>
 
-        <button type='submit' className='mt-8 w-40 h-10 bg-primary text-white
-        rounded cursor-pointer text-sm'>Add Blog</button>
+        <button disabled={isAdding} type='submit' className='mt-8 w-40 h-10 bg-primary text-white
+        rounded cursor-pointer text-sm'>
+          {isAdding? 'Adding....':'Add Blog'}
+          </button>
 
       </div>
     </form>
