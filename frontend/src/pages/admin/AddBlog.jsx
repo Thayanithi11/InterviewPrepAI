@@ -1,14 +1,16 @@
 import React, { useEffect, useState ,useRef} from 'react'
 import { assets, blogCategories } from '../../assets/assets'
 import Quill from 'quill';
-import { option } from 'motion/react-client';
+import { div, option } from 'motion/react-client';
 import { useAppContext } from '../../../context/AppContext';
 import toast from 'react-hot-toast';
+import {parse} from 'marked'
 
 function AddBlog() {
 
   const {axios}=useAppContext()
   const[isAdding,setIsAdding]=useState(false)
+    const[loading,setLoading]=useState(false)
 
   const editorRef=useRef(null);
   const quillRef=useRef(null);
@@ -20,7 +22,21 @@ function AddBlog() {
   const [isPublished,setIsPublished]=useState(false);
 
   const generateContent=async ()=>{
-
+      if(!title) return toast.error('Please enter a title')
+      try{
+      setLoading(true)
+      const {data}=await axios.post('/api/blog/generate',{prompt:title})
+      if(data.success){
+        quillRef.current.root.innerHTML=parse(data.content)
+      }
+      else{
+        toast.error(data.message)
+      }
+    }catch(err){
+      toast.error(err.message)
+    } finally{
+      setLoading(false)
+    }
   }
 
   const onSubmitHandler=async (e)=>{
@@ -32,6 +48,7 @@ function AddBlog() {
         title,subTitle,description:quillRef.current.root.innerHTML,
         category,isPublished
       }
+      if(!image) toast.error("Please upload image")
       const formData=new FormData();
       formData.append('blog',JSON.stringify(blog))
       formData.append('image',image)
@@ -67,7 +84,7 @@ function AddBlog() {
         <label htmlFor="image">
           <img src={!image?assets.upload_area:URL.createObjectURL(image)} className='mt-2 h-16 rounded cursor-pointer' alt=""/>
           <input type="file" id="image" onChange={(e)=> setImage(e.target.files[0])}  
-          hidden required />
+           required />
         </label>
 
         <p className='mt-4'>Blog Title</p>
@@ -83,7 +100,12 @@ function AddBlog() {
         <p className='mt-4'>Blog Description</p>
         <div className='max-w-lg h-74 pb-16 sm:pb-10 pt-2 relative'>
           <div ref={editorRef}></div>
-          <button type="button" onClick={generateContent} className='absolute bottom-8 md:bottom-1
+          {loading && (<div className='absolute right-0 top-0 bottom-0 left-0
+          flex items-center justify-center bg-black/10 mt-2'>
+             <div className='w-8 h-8 rounded-full border-2 border-t-white
+             animate-spin'></div>
+          </div>)}
+          <button disabled={loading} type="button" onClick={generateContent} className='absolute bottom-8 md:bottom-1
           right-2  text-xs text-white bg-black/70 px-4 py-1.5 rounded
           hover:underline cursor-pointer'>Generate with AI
           </button>
